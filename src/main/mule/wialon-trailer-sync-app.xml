@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="main" doc:id="5b6fb3d2-1166-4b6e-804e-7a1202a41f11" >
+		<scheduler doc:name="Scheduler" doc:id="851b915c-45ef-4600-8833-221fbe044297" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="${scheduler.frequency}" timeUnit="MINUTES" />
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="Start main flow" doc:id="4835f880-18ce-4761-b427-b23d51436420" message="Start main flow" category="Flow" />
+		<foreach doc:name="For Each" doc:id="8d8934fc-0e2a-4f8a-a3b5-6ab74588c5a7" collection="#[1 to Mule::p('scheduler.count') as Number]">
+			<http:request method="GET" doc:name="GET from Kafka" doc:id="f0bb4ab4-26e3-469c-8f49-d177a4a7db24" config-ref="HTTP_Request_configuration_kafka" path="/topics/{topic}/consumers/{consumer}/messages" responseTimeout="90000">
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	topic : Mule::p('kafka.topic.1c'),
+	consumer: Mule::p('kafka.consumer.wialon')
+}]]]></http:uri-params>
+		</http:request>
+			<logger level="INFO" doc:name="From Kafka" doc:id="9c87fb6b-6b7e-429b-8da5-7e170b3f9dd8" message="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]" category="From Kafka" />
+			<choice doc:name="Choice" doc:id="4aed3704-ea79-414b-a8be-9019f3abf977">
+			<when expression="#[not isEmpty(payload.Payload)]">
+				<set-variable value="#[attributes.headers.'kafka-message-id']" doc:name="kafka-message-id" doc:id="85e045fe-33f6-41cc-87ee-f581767990dc" variableName="kafka-message-id" />
+				<set-variable value="#[payload]" doc:name="fromKafka" doc:id="3aac849e-e2bb-4fd3-b259-9b9112c75b30" variableName="fromKafka" />
+				<http:request method="GET" doc:name="Wialon Auth" doc:id="49715f01-9976-4d2b-9a4f-bb84a881f616" config-ref="HTTP_Request_configuration_wialon" url="https://${wialon.host}/${wialon.basePath}?svc=token/login&amp;dur=0" sendBodyMode="ALWAYS" responseTimeout="90000">
+					<http:body><![CDATA[#[%dw 2.0
+var token = Mule::p('wialon.token')
+output application/x-www-form-urlencoded
+---
+params: '{"token":"$token"}']]]></http:body>
+				</http:request>
+				<set-variable value="#[payload.eid]" doc:name="sid" doc:id="25826a16-351a-43e2-b5f3-9bc7ae89e7d6" variableName="sid" />
+				<set-payload value="#[%dw 2.0&#10;output application/x-www-form-urlencoded&#10;---&#10;{&#10;	params: '{&quot;spec&quot;:{&quot;itemsType&quot;:&quot;avl_resource&quot;,&quot;propName&quot;:&quot;id&quot;,&quot;propValueMask&quot;:&quot;*&quot;,&quot;sortType&quot;:&quot;sys_name&quot;,&quot;propType&quot;:&quot;&quot;,&quot;or_logic&quot;:&quot;0&quot;},&quot;force&quot;:1,&quot;flags&quot;:&quot;65637&quot;,&quot;from&quot;:0,&quot;to&quot;:0}',&#10;	sid: payload.eid&#10;}]" doc:name="url-encoded-body" doc:id="dee5e2fa-d3bc-40fe-836c-27e70404d87d" />
+				<http:request method="GET" doc:name="GET from Wialon" doc:id="4a10e97e-3ca1-415f-bb36-b1f68c2dc7a5" config-ref="HTTP_Request_configuration_wialon" url="https://${wialon.host}/${wialon.basePath}?sid&amp;svc=core/search_items" sendBodyMode="ALWAYS" responseTimeout="90000" />
+				<logger level="INFO" doc:name="From Wialon" doc:id="7c78a6c2-ddaa-4479-8559-e51c609649ab" message="#[%dw 2.0 output application/json --- payload]" category="From Wialon" />
+				<set-payload value="#[%dw 2.0&#10;output application/json&#10;---&#10;((payload.items[0].trlrs mapObject {tmp: $}).*tmp map $ filter $.jp.'1CId' ==&#10;vars.fromKafka.Payload.BusinessEvent.BusinessEntity.Id)]" doc:name="Set Payload" doc:id="9a2eed64-b5cd-4244-a477-a66c909127c4" />
+				<logger level="INFO" doc:name="After filter" doc:id="5e1211d9-ae9c-4e09-bc94-61e4c55b20b4" message="#[%dw 2.0 output application/json --- payload]" category="After filter" />
+				<choice doc:name="Choice" doc:id="b2f57a17-239a-4273-a775-93021fe0534c">
+					<when expression="#[sizeOf(payload) &lt;= 1]">
+						<set-payload value="#[payload[0]]" doc:name="Set Payload" doc:id="0a5ffe07-b090-44c1-b421-f34cb50f8397" />
+					</when>
+					<otherwise>
+						<raise-error doc:name="Raise error" doc:id="0f5a785b-c7b3-4a2f-a1d4-e0fed7424787" type="WIALON:MORE_THAN_ONE_ENTRY" description="More than one entry" />
+					</otherwise>
+				</choice>
+				<flow-ref doc:name="create-update" doc:id="9f5778bb-badf-4dee-90cf-ade048947b13" name="create-update" />
+			</when>
+		</choice>
+		</foreach>
+		<logger level="INFO" doc:name="End main flow" doc:id="93b38ece-cbd3-44e9-b1c2-f0c64b5d8ae4" message="End main flow" category="Flow" />
+	</flow>
+</mule>

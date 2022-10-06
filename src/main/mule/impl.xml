@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:request-config name="HTTP_Request_configuration_wialon" doc:name="HTTP Request configuration" doc:id="4ddc4a8d-b339-40e0-bed6-e8831204b488" basePath="/${wialon.basePath}" >
+		<http:request-connection protocol="HTTPS" host="${wialon.host}" />
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration_kafka" doc:name="HTTP Request configuration" doc:id="8576fe59-b8c8-49c4-98ac-4b6907ac4dde" basePath="/api">
+		<http:request-connection protocol="${kafka.protocol}" host="${kafka.host}" port="${kafka.port}" >
+			<http:authentication >
+				<http:basic-authentication username="${kafka.username}" password="${kafka.password}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration_hecterra" doc:name="HTTP Request configuration" doc:id="006b252e-3951-4f40-b4d0-849154cf9852" basePath="/${hecterra.basePath}" >
+		<http:request-connection protocol="HTTPS" host="${hecterra.host}" />
+	</http:request-config>
+	<sub-flow name="create-update" doc:id="a4755642-91a1-46d9-ab9c-0d13464c73d6" >
+		<choice doc:name="Choice" doc:id="a1f08a40-95cc-4479-85d5-c5806e09ce26" >
+			<when expression="#[isEmpty(payload)]" >
+				<flow-ref doc:name="create" doc:id="ca8a105e-61c0-42cc-86bc-0a2694013e40" name="create"/>
+			</when>
+			<when expression="#[not isEmpty(payload)]">
+				<flow-ref doc:name="update" doc:id="5bca1ad1-3703-46c7-93fa-a34ac30fd790" name="update"/>
+			</when>
+		</choice>
+	</sub-flow>
+	<sub-flow name="create" doc:id="4e97a965-116d-4fc0-ab06-310bc9d507dd" >
+		<set-payload value="#[%dw 2.0&#10;var action = if (vars.fromKafka.Payload.BusinessEvent.BusinessEntity.Active) &quot;&quot; else &quot;Списан &quot;&#10;var be = vars.fromKafka.Payload.BusinessEvent.BusinessEntity&#10;var code = be.QRCode&#10;var name = be.Name&#10;output application/json&#10;---&#10;{&#10;	&quot;itemId&quot;: Mule::p('wialon.itemId') as Number,&#10;	&quot;id&quot;: 0,&#10;	&quot;callMode&quot;: &quot;create&quot;,&#10;	&quot;c&quot;: &quot;&quot;,&#10;	&quot;ds&quot;: be.TechniqueGroup,&#10;	&quot;n&quot;: &quot;$action$code $name&quot;,&#10;	&quot;jp&quot;: {&#10;		&quot;Width&quot;: be.Width,&#10;		&quot;Operation&quot;: be.Operation.Name,&#10;		&quot;Offset&quot;: be.Offset,&#10;		&quot;1CId&quot;: be.Id&#10;	}&#10;}]" doc:name="Set Payload" doc:id="fd65fe62-c5e9-4333-b65a-57baab9392c6" />
+		<flow-ref doc:name="Create trailer (Wialon)" doc:id="8df37a99-36ce-445f-96e2-c75fe9ca0641" name="wialon-update-request"/>
+		<logger level="INFO" doc:name="After create trailer" doc:id="cdef8085-ee05-4c8f-b543-4decf02c3e6b" message="#[%dw 2.0 output application/json --- payload]" category="After create trailer"/>
+		<flow-ref doc:name="update-wialon" doc:id="e329a7d3-9340-44eb-8cb2-45c4a5c1fcb6" name="update-wialon" />
+	</sub-flow>
+	<sub-flow name="update" doc:id="2beb7a81-3a2b-4f4a-9582-7fde3d58769d">
+		<set-payload value='#[%dw 2.0&#10;var action = if (vars.fromKafka.Payload.BusinessEvent.BusinessEntity.Active) "" else "Списан "&#10;var be = vars.fromKafka.Payload.BusinessEvent.BusinessEntity&#10;var code = be.QRCode&#10;var name = be.Name&#10;output application/json&#10;---&#10;payload update {&#10;	case .n -&gt; "$action$code $name"&#10;} ++ {&#10;	itemId: Mule::p("wialon.itemId") as Number&#10;} ++ {&#10;	callMode: "update"&#10;}]' doc:name="Set Payload" doc:id="bf2beb99-410d-4160-ad70-d3ac65312f96" />
+		<flow-ref doc:name="Update trailer (Wialon)" doc:id="976b1e0c-9a19-4d30-91e8-00f2016403b2" name="wialon-update-request"/>
+		<logger level="INFO" doc:name="After update trailer" doc:id="c6dc2cac-2c58-4dc0-bfb7-65bb28d36742" message="#[%dw 2.0 output application/json --- payload]" category="After update trailer" />
+		<flow-ref doc:name="update-wialon" doc:id="c3781b27-51c6-439d-b517-431bbc24b189" name="update-wialon"/>
+	</sub-flow>
+	<sub-flow name="update-wialon" doc:id="22d85b52-1cca-4da0-a50e-4ba903dfa67d">
+		<choice doc:name="Choice" doc:id="461e1257-e159-4646-9047-d5160d5652db">
+			<when expression="#[!payload.error?]">
+				<set-variable value="#[payload[1]]" doc:name="fromWialon" doc:id="da6e6897-c625-4ecb-8646-8a297efb83ff" variableName="fromWialon" />
+				<http:request method="GET" doc:name="Get from hecterra" doc:id="84dea478-45a3-4871-a78c-a8f3a6a9125f" config-ref="HTTP_Request_configuration_hecterra" path="/{wialonId}" responseTimeout="90000">
+					<http:uri-params><![CDATA[#[output application/java
+---
+{
+	wialonId : vars.fromWialon.id
+}]]]></http:uri-params>
+				</http:request>
+				<logger level="INFO" doc:name="From hecterra" doc:id="a53d1a3d-0b94-4428-9b43-8f8622030936" message="#[%dw 2.0 output application/json --- payload]" category="From hecterra" />
+				<choice doc:name="Choice" doc:id="139e70c3-3076-45df-824f-6cfc6c8f3b8e">
+					<when expression="#[not isEmpty(payload)]">
+						<set-variable value="#[payload.trailerid]" doc:name="hecterraId" doc:id="664d41cf-4e50-44fd-9e6d-b3d9fd8534bf" variableName="hecterraId" />
+						<set-variable value="#[payload.'w_id']" doc:name="wialonId" doc:id="7d79999c-e0fc-41ef-94d3-172832c0bc9e" variableName="wialonId" />
+						<set-payload value='#[%dw 2.0&#10;var action = if (vars.fromKafka.Payload.BusinessEvent.BusinessEntity.Active) "" else "Списан "&#10;var be = vars.fromKafka.Payload.BusinessEvent.BusinessEntity&#10;var code = be.QRCode&#10;var name = be.Name&#10;output application/json&#10;---&#10;vars.fromWialon update {&#10;  case .n -&gt; "$action$code $name"&#10;  case jp at .jp -&gt; {&#10;    HecterraId: vars.hecterraId as String,&#10;    (jp)&#10;  }&#10;}&#10; ++ {&#10;  itemId: Mule::p("wialon.itemId") as Number&#10;} ++ {&#10;  callMode: "update"&#10;}]' doc:name="Set Payload" doc:id="b8df00be-bb78-4b06-83a9-31e02223f2be" />
+						<flow-ref doc:name="Update HecterraId in Wialon" doc:id="f3985c34-46aa-4933-8b3f-0fd7e64e9653" name="wialon-update-request"/>
+						<logger level="INFO" doc:name="After update" doc:id="bf4d3b06-d900-471b-9acc-687c706970b1" message="#[%dw 2.0 output application/json --- payload]" category="After second update" />
+						<set-payload value="#[%dw 2.0&#10;var currentTime = (now() &gt;&gt; &quot;Europe/Moscow&quot;) as String {format: &quot;yyyy-MM-dd'T'HH:mm:ss.SSSxxx&quot;}&#10;var businessEntity = vars.fromKafka.Payload.BusinessEvent.BusinessEntity&#10;output application/json&#10;---&#10;vars.fromKafka.Payload  update {&#10;        case be at .BusinessEvent.BusinessEntity -&gt; {&#10;            (be - &quot;UpdateTime&quot; - &quot;CreateTime&quot;),&#10;            HecterraId: vars.hecterraId as String,&#10;            WialonId: vars.wialonId as String,&#10;            UpdateTime: currentTime,&#10;            CreateTime: currentTime&#10;        }&#10;        case .BusinessEvent.EventTime -&gt; currentTime&#10;}]" doc:name="Kafka body" doc:id="42adaeb2-ab6b-44ef-b710-9aa4ec47bb3d" />
+						<flow-ref doc:name="kafka-create-message" doc:id="374d2d83-1685-4c1f-96b5-74617b877840" name="kafka-create-message" />
+						<flow-ref doc:name="kafka-ack-message" doc:id="a10319de-499c-49fe-a0e2-8bb0e4c7ac87" name="kafka-ack-message" />
+					</when>
+					<otherwise>
+						<logger level="INFO" doc:name="Empty payload" doc:id="804422e9-2e00-4400-a78b-7b4c8ff410e6" message="Empty payload" category="Hecterra" />
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise>
+				<logger level="ERROR" doc:name="Error while updating" doc:id="6485aa58-c981-4b26-b208-bcd37796cc90" message="Error while updating #[%dw 2.0 output application/json --- payload]" category="Wialon" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="wialon-update-request" doc:id="143f1667-c6d9-49fd-8255-029bd2be3ae1" >
+		<http:request method="POST" doc:name="Wialon update request" doc:id="f51a1abe-ed42-43dd-a3ea-627664fb6904" config-ref="HTTP_Request_configuration_wialon" url="https://${wialon.host}/${wialon.basePath}${wialon.path}">
+			<http:body ><![CDATA[#[%dw 2.0
+output application/x-www-form-urlencoded
+---
+{
+	params: write(payload, 'application/json', {indent: false}) replace '": ' with '":',
+	sid: vars.sid
+}]]]></http:body>
+		</http:request>
+	</sub-flow>
+	<sub-flow name="kafka-ack-message" doc:id="318edc3f-357a-48cd-a722-e05cb9b44da1" >
+		<http:request method="DELETE" doc:name="Delete message from Kafka" doc:id="a298aeeb-da28-479f-8155-f8bde4bfb664" config-ref="HTTP_Request_configuration_kafka" path="/topics/{topic}/consumers/{consumer}/messages/{kafkaId}" responseTimeout="90000">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	topic : Mule::p('kafka.topic.1c'),
+	consumer: Mule::p('kafka.consumer.wialon'),
+	kafkaId: vars.'kafka-message-id'
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="Ack message" doc:id="ca496e46-b993-4119-9178-41235e0d66be" message="#[%dw 2.0 output application/json --- payload]" category="Ack message"/>
+	</sub-flow>
+	<sub-flow name="kafka-create-message" doc:id="754d4829-4cd5-484b-8fc0-a93ced6a4fd6" >
+		<http:request method="POST" doc:name="Post message to Kafka" doc:id="daabe577-61b0-4d99-aa5b-fe9edd5603df" config-ref="HTTP_Request_configuration_kafka" path="/topics/${kafka.topic.wialon}"/>
+		<logger level="INFO" doc:name="Create message" doc:id="4f667cb4-39bd-4c04-bf88-8881651b5a7e" message="#[%dw 2.0 output application/json --- payload]" category="Kafka"/>
+	</sub-flow>
+</mule>

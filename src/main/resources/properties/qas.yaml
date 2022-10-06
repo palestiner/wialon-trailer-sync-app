@@ -1,0 +1,26 @@
+kafka: 
+  protocol: "HTTP"
+  host: "10.1.56.238"
+  port: "8081"
+  username: "svcQA1C"
+  password: "P7SPYtefvlEaOQJu42qeLy44Ofhme0gF"
+  topic:
+    1c: "qa.1c.traile"
+    wialon: "qa.hecterra.rf.trailer"
+  consumer: 
+    wialon: "wialon-trailer"
+
+wialon: 
+  protocol: "HTTPS"
+  host: "wialon.agroterra.ru"
+  basePath: "wialon/ajax.html"
+  path: "?svc=resource/update_trailer"
+  token: "ef9737e06b4d80ed597f45ede57d4b65D1E07A75E3848B17D92B19439BC59F3E81570999"
+  itemId: "5484"
+
+hecterra: 
+  protocol: "HTTPS"
+  host: "hecterra.watchit.ru"
+  basePath: "organizations/1/branches/1/trailers/wialon"
+  token: "ddb06d7aee107f61d5622dd244694031"
+  

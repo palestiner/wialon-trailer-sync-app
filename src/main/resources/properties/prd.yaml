@@ -1,0 +1,17 @@
+kafka: 
+  protocol: "HTTP"
+  host: "10.1.56.238"
+  port: "8081"
+  username: "svcQA1C"
+  password: "P7SPYtefvlEaOQJu42qeLy44Ofhme0gF"
+  topic:
+    1c: "qa.1c.rf.tractor-driver-accounting-sheet"
+    hecterra: "qa.hecterra.rf.tractor-driver-accounting-sheet"
+  consumer: 
+    hecterra: "hecterra-1000"
+
+hecterra: 
+  protocol: "HTTPS"
+  host: "hecterra.watchit.ru"
+  basePath: "organizations/1/branches/1/candidates/units"
+  token: "ddb06d7aee107f61d5622dd244694031"
