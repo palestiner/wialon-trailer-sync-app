@@ -2,10 +2,11 @@ kafka:
   protocol: "HTTP"
   host: "10.1.56.238"
   port: "8081"
-  username: "svcQA1C"
-  password: "P7SPYtefvlEaOQJu42qeLy44Ofhme0gF"
+  basePath: "api"
+  username: "svcServiceUser"
+  password: "xa7acmMtLOAgcoPWZSiDU5ZV5Jdy4DVk"
   topic:
-    1c: "qa.1c.traile"
+    1c: "qa.1c-upp.trailer"
     wialon: "qa.hecterra.rf.trailer"
   consumer: 
     wialon: "wialon-trailer"

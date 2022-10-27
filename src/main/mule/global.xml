@@ -10,5 +10,5 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<configuration doc:name="Configuration" doc:id="cd1a3131-a5d2-43cd-a015-1443444b72e8" defaultErrorHandler-ref="globalError_Handler" doc:description="Error handler"/>
 	<configuration-properties doc:name="Configuration properties" doc:id="071c8742-0dba-4751-b76a-dc3887ea2c84" doc:description="common.yaml" file="properties\common.yaml" />
 	<configuration-properties doc:name="Configuration properties" doc:id="e34b4ee9-1587-4e15-bbd6-23390b96ddf5" file="properties/${mule.env}.yaml" doc:description="properties/${mule.env}.yaml"/>
-	<global-property doc:name="Global Property" doc:id="cbdfb5df-3a37-45cf-8c43-012fba117f29" name="mule.env" value="qas" />
+	<global-property doc:name="Global Property" doc:id="cbdfb5df-3a37-45cf-8c43-012fba117f29" name="mule.env" value="qas-prd" />
 </mule>

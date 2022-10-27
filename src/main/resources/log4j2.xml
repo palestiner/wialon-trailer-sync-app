@@ -15,20 +15,50 @@
             <SizeBasedTriggeringPolicy size="10 MB"/>
             <DefaultRolloverStrategy max="10"/>
         </RollingFile>
+		<Http name="ELK" url="https://elasticsearch.agroterra.ru/${env:mule.env:-qas}-wialon-trailer-sync-app/_doc">
+			<JsonLayout compact="true" eventEol="true" properties="true" includeTimeMillis="true">
+				<KeyValuePair key="timestamp" value="$${date:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"/>
+				<KeyValuePair key="app-name" value="${env:mule.env:-qas}-wialon-trailer-sync-app"/>
+			</JsonLayout>
+			<Property name="kbn-xsrf" value="true" />
+			<Property name="Content-Type" value="application/json"/>
+			<Property name="Authorization" value="ApiKey ckFxT3pJTUI5OXltS1RJR2VDTnE6eFRUMGFVbVBRaWFCV2NuYVFUSG1sdw=="/>
+			<!-- <PatternLayout pattern="%-5p %d [%t] [processor: %X{processorPath}; event: %X{correlationId}] %c: %m%n" /> -->
+		</Http>
     </Appenders>
 
     <Loggers>
         <!-- Http Logger shows wire traffic on DEBUG -->
-        <!--AsyncLogger name="org.mule.service.http.impl.service.HttpMessageLogger" level="DEBUG"/-->
-        <AsyncLogger name="org.mule.service.http" level="WARN"/>
-        <AsyncLogger name="org.mule.extension.http" level="WARN"/>
+        <AsyncLogger name="org.mule.service.http.impl.service.HttpMessageLogger" level="DEBUG">
+			<AppenderRef ref="file"/>
+			<!-- <AppenderRef ref="ELK"/> -->
+        </AsyncLogger>
+        <AsyncLogger name="org.mule.service.http" level="WARN">
+			<AppenderRef ref="file"/>
+			<AppenderRef ref="ELK"/>
+        </AsyncLogger>
+        <AsyncLogger name="org.mule.extension.http" level="WARN">
+			<AppenderRef ref="file"/>
+			<AppenderRef ref="ELK"/>
+        </AsyncLogger>
 
         <!-- Mule logger -->
-        <AsyncLogger name="org.mule.runtime.core.internal.processor.LoggerMessageProcessor" level="INFO"/>
-
-        <AsyncRoot level="INFO">
-            <AppenderRef ref="file"/>
-        </AsyncRoot>
+        <AsyncLogger name="org.mule.runtime.core.internal.processor.LoggerMessageProcessor" level="INFO">
+        	<AppenderRef ref="file"/>
+			<AppenderRef ref="ELK"/>
+        </AsyncLogger>
+		<AsyncLogger name="com.inmar.connectors.kafka" level="DEBUG">
+			<AppenderRef ref="file"/>
+			<AppenderRef ref="ELK"/>
+		</AsyncLogger>
+    	<!-- <AsyncLogger name="com.inmar.connectors.kafka.internal.model.consumer" level="WARN"/> -->
+<!--     	<AsyncLogger name="org.apache.kafka" level="DEBUG"/> -->
+      <AsyncRoot level="INFO">
+        <AppenderRef ref="file" level="INFO"/>
+        <AppenderRef ref="file" level="DEBUG"/>
+        <AppenderRef ref="ELK" level="INFO"/>
+        <AppenderRef ref="ELK" level="DEBUG"/>
+      </AsyncRoot>
     </Loggers>
 
 </Configuration>

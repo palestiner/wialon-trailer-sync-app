@@ -43,7 +43,12 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<choice doc:name="Choice" doc:id="461e1257-e159-4646-9047-d5160d5652db">
 			<when expression="#[!payload.error?]">
 				<set-variable value="#[payload[1]]" doc:name="fromWialon" doc:id="da6e6897-c625-4ecb-8646-8a297efb83ff" variableName="fromWialon" />
-				<http:request method="GET" doc:name="Get from hecterra" doc:id="84dea478-45a3-4871-a78c-a8f3a6a9125f" config-ref="HTTP_Request_configuration_hecterra" path="/{wialonId}" responseTimeout="90000">
+				<http:request method="GET" doc:name="Get from hecterra" doc:id="84dea478-45a3-4871-a78c-a8f3a6a9125f" config-ref="HTTP_Request_configuration_hecterra" path="/{wialonId}" responseTimeout="120000">
+					<http:headers ><![CDATA[#[output application/java
+---
+{
+	Authorization : 'Bearer ${hecterra.token}'
+}]]]></http:headers>
 					<http:uri-params><![CDATA[#[output application/java
 ---
 {

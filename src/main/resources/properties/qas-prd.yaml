@@ -1,8 +1,8 @@
 kafka: 
-  protocol: "HTTPS"
-  host: "esb.agroterra.ru"
-  port: ""
-  basePath: "event-platform/v1/api"
+  protocol: "HTTP"
+  host: "10.1.56.238"
+  port: "8081"
+  basePath: "api"
   username: "svcServiceUser"
   password: "xa7acmMtLOAgcoPWZSiDU5ZV5Jdy4DVk"
   topic:
