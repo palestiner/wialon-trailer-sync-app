@@ -131,7 +131,7 @@ http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/m
     
     <sub-flow name="global-prepare-error-response-sub-flow" doc:id="b1e8e48b-06c3-4011-9abe-7dd275d9e95f">
 		<set-payload value="#[%dw 2.0&#10;output application/json&#10;---&#10;&#10;&quot;error&quot;: {&#10;  &quot;status&quot;:  vars.httpStatus,&#10;  &quot;message&quot;: if(error.description != null) error.description else 'UNKNOWN Error',&#10;  &quot;type&quot;: if(error.errorType.namespace != null) error.errorType.namespace  else 'UNKNOWN Type',&#10;  &quot;detail&quot;: if(error.detailedDescription != null) error.detailedDescription  else 'UNKNOWN Error',&#10;  &quot;timestamp&quot;: now()&#10;}]" doc:name="Set Payload" doc:id="57d102f9-3ed1-43a2-a11e-f6ff94ee5143" />
-		<logger level="INFO" doc:name="Logger" doc:id="8c51500b-8a61-4aa1-934a-3e0f575fddb7" message="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]" category="Error handler"/>
+		<logger level="ERROR" doc:name="Logger" doc:id="8c51500b-8a61-4aa1-934a-3e0f575fddb7" message="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]" category="Error handler"/>
     
 </sub-flow>
 	

@@ -5,7 +5,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<flow name="main" doc:id="5b6fb3d2-1166-4b6e-804e-7a1202a41f11" >
-		<scheduler doc:name="Scheduler" doc:id="851b915c-45ef-4600-8833-221fbe044297" >
+		<scheduler doc:name="Scheduler" doc:id="851b915c-45ef-4600-8833-221fbe044297" disallowConcurrentExecution="true">
 			<scheduling-strategy >
 				<fixed-frequency frequency="${scheduler.frequency}" timeUnit="MINUTES" />
 			</scheduling-strategy>
