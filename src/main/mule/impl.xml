@@ -44,6 +44,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 			<when expression="#[!payload.error?]">
 				<set-variable value="#[payload[1]]" doc:name="fromWialon" doc:id="da6e6897-c625-4ecb-8646-8a297efb83ff" variableName="fromWialon" />
 				<http:request method="GET" doc:name="Get from hecterra" doc:id="84dea478-45a3-4871-a78c-a8f3a6a9125f" config-ref="HTTP_Request_configuration_hecterra" path="/{wialonId}" responseTimeout="120000">
+					<non-repeatable-stream />
 					<http:headers ><![CDATA[#[output application/java
 ---
 {
@@ -79,6 +80,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	</sub-flow>
 	<sub-flow name="wialon-update-request" doc:id="143f1667-c6d9-49fd-8255-029bd2be3ae1" >
 		<http:request method="POST" doc:name="Wialon update request" doc:id="f51a1abe-ed42-43dd-a3ea-627664fb6904" config-ref="HTTP_Request_configuration_wialon" url="https://${wialon.host}/${wialon.basePath}${wialon.path}">
+			<non-repeatable-stream />
 			<http:body ><![CDATA[#[%dw 2.0
 output application/x-www-form-urlencoded
 ---
@@ -90,6 +92,7 @@ output application/x-www-form-urlencoded
 	</sub-flow>
 	<sub-flow name="kafka-ack-message" doc:id="318edc3f-357a-48cd-a722-e05cb9b44da1" >
 		<http:request method="DELETE" doc:name="Delete message from Kafka" doc:id="a298aeeb-da28-479f-8155-f8bde4bfb664" config-ref="HTTP_Request_configuration_kafka" path="/topics/{topic}/consumers/{consumer}/messages/{kafkaId}" responseTimeout="90000">
+			<non-repeatable-stream />
 			<http:uri-params ><![CDATA[#[output application/java
 ---
 {
@@ -101,7 +104,9 @@ output application/x-www-form-urlencoded
 		<logger level="INFO" doc:name="Ack message" doc:id="ca496e46-b993-4119-9178-41235e0d66be" message="#[%dw 2.0 output application/json --- payload]" category="Ack message"/>
 	</sub-flow>
 	<sub-flow name="kafka-create-message" doc:id="754d4829-4cd5-484b-8fc0-a93ced6a4fd6" >
-		<http:request method="POST" doc:name="Post message to Kafka" doc:id="daabe577-61b0-4d99-aa5b-fe9edd5603df" config-ref="HTTP_Request_configuration_kafka" path="/topics/${kafka.topic.wialon}"/>
+		<http:request method="POST" doc:name="Post message to Kafka" doc:id="daabe577-61b0-4d99-aa5b-fe9edd5603df" config-ref="HTTP_Request_configuration_kafka" path="/topics/${kafka.topic.wialon}">
+			<non-repeatable-stream />
+		</http:request>
 		<logger level="INFO" doc:name="Create message" doc:id="4f667cb4-39bd-4c04-bf88-8881651b5a7e" message="#[%dw 2.0 output application/json --- payload]" category="Kafka"/>
 	</sub-flow>
 </mule>

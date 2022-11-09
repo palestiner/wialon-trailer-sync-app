@@ -21,7 +21,7 @@ wialon:
 
 hecterra: 
   protocol: "HTTPS"
-  host: "hecterra.watchit.ru"
+  host: "hecterra.agroterra.ru"
   basePath: "organizations/1/branches/1/trailers/wialon"
   token: "ddb06d7aee107f61d5622dd244694031"
   
