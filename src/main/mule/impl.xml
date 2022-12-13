@@ -7,7 +7,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<http:request-config name="HTTP_Request_configuration_wialon" doc:name="HTTP Request configuration" doc:id="4ddc4a8d-b339-40e0-bed6-e8831204b488" basePath="/${wialon.basePath}" >
 		<http:request-connection protocol="HTTPS" host="${wialon.host}" />
 	</http:request-config>
-	<http:request-config name="HTTP_Request_configuration_kafka" doc:name="HTTP Request configuration" doc:id="8576fe59-b8c8-49c4-98ac-4b6907ac4dde" basePath="/api">
+	<http:request-config name="HTTP_Request_configuration_kafka" doc:name="HTTP Request configuration" doc:id="8576fe59-b8c8-49c4-98ac-4b6907ac4dde" basePath="/${kafka.basePath}">
 		<http:request-connection protocol="${kafka.protocol}" host="${kafka.host}" port="${kafka.port}" >
 			<http:authentication >
 				<http:basic-authentication username="${kafka.username}" password="${kafka.password}" />
